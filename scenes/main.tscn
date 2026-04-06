@@ -1,0 +1,89 @@
+[gd_scene load_steps=8 format=3 uid="uid://c1w3g82qg1q3k"]
+
+[ext_resource type="Script" uid="uid://bn1dc8gd1qolx" path="res://scripts/player.gd" id="1_player"]
+[ext_resource type="PackedScene" uid="uid://bew5ujyvi1uuk" path="res://assets/character.fbx" id="2_character"]
+[ext_resource type="Script" path="res://scripts/foliage_spawner.gd" id="3_foliage_spawner"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
+sky_top_color = Color(0.529412, 0.807843, 0.921569, 1)
+sky_horizon_color = Color(0.878431, 0.937255, 1, 1)
+ground_bottom_color = Color(0.2, 0.4, 0.2, 1)
+ground_horizon_color = Color(0.529412, 0.807843, 0.529412, 1)
+
+[sub_resource type="Sky" id="Sky_1"]
+sky_material = SubResource("ProceduralSkyMaterial_1")
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 2
+sky = SubResource("Sky_1")
+ambient_light_source = 2
+ambient_light_color = Color(1, 0.95, 0.9, 1)
+ambient_light_energy = 0.6
+directional_light_mode = 1
+tonemap_mode = 2
+ssao_enabled = true
+glow_enabled = true
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_1"]
+size = Vector2(1000, 1000)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
+albedo_color = Color(0.4, 0.7, 0.3, 1)
+roughness = 0.8
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+height = 2.0
+
+[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_1"]
+
+[node name="Main" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -0.5, 0.5, 50, 50, 50)
+shadow_enabled = true
+shadow_bias = 0.05
+
+[node name="Ground" type="StaticBody3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource("PlaneMesh_1")
+surface_material_override/0 = SubResource("StandardMaterial3D_ground")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("WorldBoundaryShape3D_1")
+
+[node name="Foliage" type="Node3D" parent="."]
+script = ExtResource("3_foliage_spawner")
+
+[node name="Player" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+script = ExtResource("1_player")
+
+[node name="Model" parent="Player" instance=ExtResource("2_character")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
+shape = SubResource("CapsuleShape3D_1")
+
+[node name="Camera3D" type="Camera3D" parent="Player"]
+transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, 10, 15)
+current = true
+
+[node name="UI" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Instructions" type="Label" parent="UI"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 300.0
+offset_bottom = 100.0
+text = "WASD - Walk
+Shift - Run
+H - Sprint
+ESC - Exit"
