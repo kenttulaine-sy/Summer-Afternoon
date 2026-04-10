@@ -5,45 +5,107 @@
  */
 
 // ============================================
-// ASSET REGISTRY - Only existing files (12 total)
-// Updated to match actual files in assets/models/
+// ASSET REGISTRY - Classified by filename keywords
+// Source: assets/models/ + assets/models/lowpoly/LowPolyAssets/
+// Classification: case-insensitive filename matching
 // ============================================
 
 const AssetRegistry = {
- // TREES - 6 variants (only existing files)
+ // TREES - 11 files (high detail + low poly)
  TREES: {
  COMMON: ['CommonTree_1.obj', 'CommonTree_2.obj', 'CommonTree_3.obj', 'CommonTree_4.obj', 'CommonTree_5.obj'],
- TWISTED: ['TwistedTree_1.obj'] // Only 1 exists
+ TWISTED: ['TwistedTree_1.obj'],
+ DEAD: ['DeadTree.FBX'],
+ LOWPOLY: ['Tree01.FBX', 'Tree02.FBX', 'Tree03.FBX', 'Tree04.FBX', 'Tree05.FBX']
  },
  
- // ROCKS - 3 variants (only existing files)
+ // ROCKS - 4 files
  ROCKS: {
- MEDIUM: ['Rock_Medium_1.obj', 'Rock_Medium_2.obj', 'Rock_Medium_3.obj']
+ MEDIUM: ['Rock_Medium_1.obj', 'Rock_Medium_2.obj', 'Rock_Medium_3.obj'],
+ LARGE: ['LargeRock.FBX'],
+ SMALL: ['Small Rock.FBX']
  },
  
- // PLANTS - 1 variant
- PLANTS: {
+ // GROUND FOLIAGE - 3 files
+ GROUND: {
  FERN: ['Fern_1.obj'],
- GRASS: [] // Empty array for safe iteration
+ GRASS: ['Grass.FBX'],
+ BUSH: ['Little Bush.FBX']
  },
  
- // FLOWERS - 1 variant
+ // FLOWERS - 1 file
  FLOWERS: {
  GROUP: ['Flower_4_Group.obj']
  },
  
- // MUSHROOMS - 1 variant
- MUSHROOMS: ['Mushroom_Laetiporus.obj']
+ // MUSHROOMS - 1 file
+ MUSHROOMS: ['Mushroom_Laetiporus.obj'],
+ 
+ // STRUCTURES / PROPS - 10 files
+ STRUCTURES: {
+ CAMPFIRE: ['Campfire.FBX'],
+ TENT: ['Tent #1.FBX', 'Tent #2.FBX'],
+ WELL: ['Well.FBX'],
+ SIGNPOST: ['Sign Post.FBX', 'Directions Sign Post.FBX'],
+ FENCE: ['Fence.FBX'],
+ ROCKWALL: ['RockWall.FBX']
+ },
+ 
+ // LOGS / WOOD - 3 files
+ WOOD: {
+ LOG: ['Log No Axe.FBX', 'Log With axe.FBX', 'LogPile.FBX']
+ },
+ 
+ // MISC / SMALL PROPS - 3 files
+ MISC: {
+ BARREL: ['Barrel.FBX'],
+ BRICK: ['Brick 01.FBX', 'Brick 02.FBX'],
+ TORCH: ['Torch.FBX']
+ }
 };
 
-// Asset categorization for distribution - only use EXISTING files
+// Asset categorization for distribution - organized by category
 const AssetCategories = {
- LARGE_ANCHORS: [...AssetRegistry.TREES.COMMON, ...AssetRegistry.TREES.TWISTED],
- MEDIUM_STRUCTURE: [...AssetRegistry.ROCKS.MEDIUM],
- SMALL_DETAIL: [
- ...AssetRegistry.PLANTS.FERN, 
- ...AssetRegistry.FLOWERS.GROUP,
- ...AssetRegistry.MUSHROOMS
+ // Primary world elements
+ TREES: [
+ ...AssetRegistry.TREES.COMMON,
+ ...AssetRegistry.TREES.TWISTED,
+ ...AssetRegistry.TREES.DEAD,
+ ...AssetRegistry.TREES.LOWPOLY
+ ],
+ ROCKS: [
+ ...AssetRegistry.ROCKS.MEDIUM,
+ ...AssetRegistry.ROCKS.LARGE,
+ ...AssetRegistry.ROCKS.SMALL
+ ],
+ GROUND_FOLIAGE: [
+ ...AssetRegistry.GROUND.FERN,
+ ...AssetRegistry.GROUND.GRASS,
+ ...AssetRegistry.GROUND.BUSH
+ ],
+ 
+ // Decorative elements
+ FLOWERS: [...AssetRegistry.FLOWERS.GROUP],
+ MUSHROOMS: [...AssetRegistry.MUSHROOMS],
+ 
+ // Structures and landmarks
+ STRUCTURES: [
+ ...AssetRegistry.STRUCTURES.CAMPFIRE,
+ ...AssetRegistry.STRUCTURES.TENT,
+ ...AssetRegistry.STRUCTURES.WELL,
+ ...AssetRegistry.STRUCTURES.SIGNPOST,
+ ...AssetRegistry.STRUCTURES.FENCE,
+ ...AssetRegistry.STRUCTURES.ROCKWALL
+ ],
+ 
+ // Wood and organic debris
+ WOOD: [...AssetRegistry.WOOD.LOG],
+ 
+ // Small props
+ MISC: [
+ ...AssetRegistry.MISC.BARREL,
+ ...AssetRegistry.MISC.BRICK,
+ ...AssetRegistry.MISC.TORCH
  ]
 };
 
@@ -852,14 +914,28 @@ const PlayableGame = (function () {
  let loadedAssets = {};
  let chunkManager = null;
 
- // Only verified existing asset files (12 total)
+ // All verified existing asset files (34 total)
  const ALL_ASSETS = [
+ // TREES - High detail (6)
  'CommonTree_1.obj', 'CommonTree_2.obj', 'CommonTree_3.obj', 'CommonTree_4.obj', 'CommonTree_5.obj',
  'TwistedTree_1.obj',
- 'Rock_Medium_1.obj', 'Rock_Medium_2.obj', 'Rock_Medium_3.obj',
- 'Fern_1.obj',
+ // TREES - Low poly FBX (6)
+ 'DeadTree.FBX', 'Tree01.FBX', 'Tree02.FBX', 'Tree03.FBX', 'Tree04.FBX', 'Tree05.FBX',
+ // ROCKS (4)
+ 'Rock_Medium_1.obj', 'Rock_Medium_2.obj', 'Rock_Medium_3.obj', 'LargeRock.FBX', 'Small Rock.FBX',
+ // GROUND FOLIAGE (3)
+ 'Fern_1.obj', 'Grass.FBX', 'Little Bush.FBX',
+ // FLOWERS (1)
  'Flower_4_Group.obj',
- 'Mushroom_Laetiporus.obj'
+ // MUSHROOMS (1)
+ 'Mushroom_Laetiporus.obj',
+ // STRUCTURES (10)
+ 'Campfire.FBX', 'Tent #1.FBX', 'Tent #2.FBX', 'Well.FBX', 'Sign Post.FBX', 'Directions Sign Post.FBX',
+ 'Fence.FBX', 'RockWall.FBX',
+ // WOOD (3)
+ 'Log No Axe.FBX', 'Log With axe.FBX', 'LogPile.FBX',
+ // MISC (3)
+ 'Barrel.FBX', 'Brick 01.FBX', 'Brick 02.FBX', 'Torch.FBX'
  ];
 
  function init() {
