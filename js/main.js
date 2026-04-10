@@ -617,25 +617,79 @@ const FOREST_CLUSTERS = [
  const lx = (clusterDef.center.x - worldX) + (Math.random() - 0.5) * clusterDef.denseRadius;
  const lz = (clusterDef.center.z - worldZ) + (Math.random() - 0.5) * clusterDef.denseRadius;
  const x = worldX + lx;
- const z = worldZ + lz;
- 
- if (isOnPath(x, z)) continue;
- 
- const coverAssets = [...AssetRegistry.PLANTS.FERN, ...AssetRegistry.MUSHROOMS];
- const assetFile = coverAssets[Math.floor(Math.random() * coverAssets.length)];
- 
- if (!loadedAssets[assetFile]) continue;
- 
- const cover = loadedAssets[assetFile].clone();
- cover.position.set(x, 0, z);
- cover.scale.set(0.25, 0.25, 0.25);
- cover.rotation.y = Math.random() * Math.PI * 2;
- 
- scene.add(cover);
- chunk.objects.push(cover);
- 
- assetUsage.set(assetFile, (assetUsage.get(assetFile) || 0) + 1);
- }
+  // Phase 3: Rich ground cover using multiple categories
+  if (densityMultiplier > 0.4) {
+    const coverCount = Math.floor(4 * densityMultiplier);
+    for (let i = 0; i < coverCount; i++) {
+      const lx = (clusterDef.center.x - worldX) + (Math.random() - 0.5) * clusterDef.denseRadius * 1.2;
+      const lz = (clusterDef.center.z - worldZ) + (Math.random() - 0.5) * clusterDef.denseRadius * 1.2;
+      const x = worldX + lx;
+      const z = worldZ + lz;
+      
+      if (isOnPath(x, z)) continue;
+      if (checkOverlap(x, z, 1.5)) continue;
+      
+      // Variety of ground foliage
+      const groundPool = [
+        ...AssetRegistry.GROUND.FERN,
+        ...AssetRegistry.GROUND.BUSH,
+        ...AssetRegistry.MUSHROOMS,
+        ...AssetRegistry.FLOWERS.GROUP
+      ];
+      
+      if (groundPool.length === 0) continue;
+      const assetFile = groundPool[Math.floor(Math.random() * groundPool.length)];
+      
+      if (!loadedAssets[assetFile]) continue;
+      
+      const cover = loadedAssets[assetFile].clone();
+      const scale = 0.2 + Math.random() * 0.15;
+      cover.position.set(x, 0, z);
+      cover.scale.set(scale, scale, scale);
+      cover.rotation.y = Math.random() * Math.PI * 2;
+      
+      scene.add(cover);
+      chunk.objects.push(cover);
+      
+      assetUsage.set(assetFile, (assetUsage.get(assetFile) || 0) + 1);
+    }
+  }
+  
+  // Phase 3: Add occasional rocks and wood debris in forests
+  if (Math.random() < 0.6) {
+    const debrisCount = Math.floor(Math.random() * 3) + 1;
+    for (let i = 0; i < debrisCount; i++) {
+      const lx = (clusterDef.center.x - worldX) + (Math.random() - 0.5) * clusterDef.denseRadius * 0.8;
+      const lz = (clusterDef.center.z - worldZ) + (Math.random() - 0.5) * clusterDef.denseRadius * 0.8;
+      const x = worldX + lx;
+      const z = worldZ + lz;
+      
+      if (isOnPath(x, z)) continue;
+      if (checkOverlap(x, z, 2)) continue;
+      
+      const debrisPool = [
+        ...AssetRegistry.ROCKS.SMALL,
+        ...AssetRegistry.WOOD.LOG
+      ];
+      
+      if (debrisPool.length === 0) continue;
+      const assetFile = debrisPool[Math.floor(Math.random() * debrisPool.length)];
+      
+      if (!loadedAssets[assetFile]) continue;
+      
+      const debris = loadedAssets[assetFile].clone();
+      const scale = 0.3 + Math.random() * 0.2;
+      debris.position.set(x, 0, z);
+      debris.scale.set(scale, scale, scale);
+      debris.rotation.y = Math.random() * Math.PI * 2;
+      
+      scene.add(debris);
+      chunk.objects.push(debris);
+      
+      assetUsage.set(assetFile, (assetUsage.get(assetFile) || 0) + 1);
+    }
+  }
+}
  }
  }
  
@@ -653,7 +707,7 @@ const FOREST_CLUSTERS = [
  if (isOnPath(x, z)) continue;
  if (checkOverlap(x, z, 1.5)) continue;
  
- const assetFile = AssetRegistry.BUSHES[i % 2];
+ const assetFile = AssetRegistry.GROUND.BUSH[i % 2];
  if (!loadedAssets[assetFile]) continue;
  
  const bush = loadedAssets[assetFile].clone();
@@ -681,7 +735,7 @@ const FOREST_CLUSTERS = [
  
  if (isOnPath(x, z)) continue;
  
- const flowerAssets = [...AssetRegistry.FLOWERS.GROUP, ...AssetRegistry.FLOWERS.SINGLE];
+ const flowerAssets = [...AssetRegistry.FLOWERS.GROUP, ...AssetRegistry.MUSHROOMS];
  const assetFile = flowerAssets[i % flowerAssets.length];
  
  if (!loadedAssets[assetFile]) continue;
@@ -742,7 +796,7 @@ const FOREST_CLUSTERS = [
  
  if (isOnPath(x, z)) continue;
  
- const pebbleAssets = [...AssetRegistry.PEBBLES.ROUND, ...AssetRegistry.PEBBLES.SQUARE];
+ const pebbleAssets = AssetRegistry.ROCKS.SMALL;
  const assetFile = pebbleAssets[i % pebbleAssets.length];
  
  if (!loadedAssets[assetFile]) continue;
@@ -762,7 +816,7 @@ const FOREST_CLUSTERS = [
  function placeTransitionDecor(chunk, worldX, worldZ, isSpawn) {
  const itemCount = 1 + Math.floor(Math.random() * 2);
  
- const plantAssets = AssetRegistry.PLANTS.GRASS;
+ const plantAssets = AssetRegistry.GROUND.GRASS;
  
  // Guard: exit safely if no grass assets available
  if (!plantAssets || plantAssets.length === 0) {
