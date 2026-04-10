@@ -12,6 +12,7 @@ var current_speed: float = walk_speed
 var animation_player: AnimationPlayer
 var current_animation: String = ""
 var is_sprinting: bool = false
+var controls_enabled: bool = false
 
 func _ready():
 	print("Player initialized - Sprint mapped to H key")
@@ -56,6 +57,18 @@ func find_animation_player(node: Node) -> AnimationPlayer:
 	return null
 
 func _physics_process(delta: float):
+	if not controls_enabled:
+		velocity.x = 0
+		velocity.z = 0
+		if not is_on_floor():
+			velocity.y -= 9.8 * delta
+		else:
+			velocity.y = 0
+		move_and_slide()
+		play_animation("Idle")
+		set_animation_speed(1.0)
+		return
+
 	# Get input
 	var input_dir = Vector3.ZERO
 	input_dir.x = Input.get_action_strength("move_right") - Input.get_action_strength("move_left")
@@ -162,5 +175,11 @@ func play_animation(anim_name: String):
 			print("Animation '", anim_name, "' not found. Available: ", animation_player.get_animation_list())
 
 func _input(event):
+	if not controls_enabled:
+		return
+
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().quit()
+
+func set_controls_enabled(enabled: bool) -> void:
+	controls_enabled = enabled
