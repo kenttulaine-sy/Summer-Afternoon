@@ -315,39 +315,54 @@ const WorldChunkManager = (function() {
  WEST_PATCH: { x: -30, z: -10, radius: 14, type: 'forest' }
  };
  
- // FOREST CLUSTER DEFINITIONS - Dense centers with falloff
- const FOREST_CLUSTERS = [
- { 
- center: { x: 10, z: -28 },
- denseRadius: 8,
- sparseRadius: 16,
- treeCount: { min: 6, max: 10 },
- treeTypes: ['PINE', 'COMMON']
- },
- { 
- center: { x: -12, z: 30 },
- denseRadius: 7,
- sparseRadius: 14,
- treeCount: { min: 5, max: 9 },
- treeTypes: ['COMMON', 'TWISTED']
- },
- { 
- center: { x: 32, z: 8 },
- denseRadius: 6,
- sparseRadius: 12,
- treeCount: { min: 4, max: 8 },
- treeTypes: ['PINE', 'DEAD']
- },
- { 
- center: { x: -30, z: -10 },
- denseRadius: 6,
- sparseRadius: 11,
- treeCount: { min: 4, max: 7 },
- treeTypes: ['TWISTED', 'DEAD']
- }
- ];
- 
- // PATHS - Clear corridors connecting spawn to forest clusters
+ // FOREST CLUSTER DEFINITIONS - Dense centers with falloff (increased density)
+const FOREST_CLUSTERS = [
+  {
+    center: { x: 10, z: -28 },
+    denseRadius: 10,
+    sparseRadius: 22,
+    treeCount: { min: 12, max: 18 },
+    treeTypes: ['COMMON', 'TWISTED']
+  },
+  {
+    center: { x: -12, z: 30 },
+    denseRadius: 9,
+    sparseRadius: 20,
+    treeCount: { min: 10, max: 16 },
+    treeTypes: ['COMMON', 'TWISTED']
+  },
+  {
+    center: { x: 32, z: 8 },
+    denseRadius: 8,
+    sparseRadius: 18,
+    treeCount: { min: 8, max: 14 },
+    treeTypes: ['COMMON', 'TWISTED']
+  },
+  {
+    center: { x: -30, z: -10 },
+    denseRadius: 8,
+    sparseRadius: 17,
+    treeCount: { min: 8, max: 13 },
+    treeTypes: ['COMMON', 'TWISTED']
+  },
+  // Additional satellite clusters for natural variety
+  {
+    center: { x: 18, z: -15 },
+    denseRadius: 5,
+    sparseRadius: 10,
+    treeCount: { min: 4, max: 7 },
+    treeTypes: ['COMMON']
+  },
+  {
+    center: { x: -20, z: 15 },
+    denseRadius: 5,
+    sparseRadius: 10,
+    treeCount: { min: 4, max: 7 },
+    treeTypes: ['TWISTED']
+  }
+];
+
+// PATHS - Clear corridors connecting spawn to forest clusters
  const PATHS = [
  { start: ZONES.CENTER, end: ZONES.NORTH_WOODS, width: 8 },
  { start: ZONES.CENTER, end: ZONES.SOUTH_GROVE, width: 8 },
