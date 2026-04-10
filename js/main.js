@@ -1422,8 +1422,8 @@ const AssetPreviews = (function() {
 })();
 
 // ============================================
-// TRANSITION SYSTEM - Phase 2 & 3
-// Cinematic transition from landing to gameplay with seamless handoff
+// TRANSITION SYSTEM
+// Calm homepage -> playable handoff with simple fade + smooth scroll
 // ============================================
 
 const TransitionSystem = (function() {
@@ -1435,39 +1435,20 @@ const TransitionSystem = (function() {
  
  let currentState = STATE.INTRO;
  let transitionInProgress = false;
- let heroCamera = null;
- let heroScene = null;
- let heroRenderer = null;
  
- let walkButton, heroTitle, heroTagline, heroDescription, heroFocus;
- let heroSection, heroCanvas, vignetteBottom, vignetteTop, playableSection, gameCanvas;
+ let walkButton, heroFocus, playableSection;
+ let revealObserver = null;
  
  function init() {
  // Query DOM elements inside init() so DOMContentLoaded has already fired
  walkButton = document.querySelector('.walk-button');
- heroTitle = document.querySelector('.shimmer-title');
- heroTagline = document.querySelector('.hero-tagline');
- heroDescription = document.querySelector('.hero-description');
  heroFocus = document.querySelector('.hero-center-focus');
- heroSection = document.getElementById('hero');
- heroCanvas = document.getElementById('hero-canvas');
- vignetteBottom = document.querySelector('.vignette-bottom');
- vignetteTop = document.querySelector('.vignette-top');
  playableSection = document.getElementById('playable');
- gameCanvas = document.getElementById('game-canvas');
-
- // Store hero scene references from HeroScene
- if (window.HeroSceneInstance) {
- heroCamera = window.HeroSceneInstance.camera;
- heroScene = window.HeroSceneInstance.scene;
- heroRenderer = window.HeroSceneInstance.renderer;
- }
  
  if (!walkButton) return;
  
- walkButton.removeAttribute('href');
  walkButton.style.cursor = 'pointer';
- walkButton.addEventListener('click', handleWalkClick, { once: true });
+ walkButton.addEventListener('click', handleWalkClick);
  }
  
  function handleWalkClick(e) {
@@ -1476,133 +1457,69 @@ const TransitionSystem = (function() {
  
  transitionInProgress = true;
  currentState = STATE.TRANSITIONING;
- 
- // PHASE 2: Fade out UI
- fadeOutUI();
- 
- // PHASE 3: Cinematic zoom into gameplay
- setTimeout(() => {
- cinematicZoomToGameplay();
- }, 400);
+
+ if (walkButton) {
+ walkButton.classList.add('is-disabled');
+ walkButton.setAttribute('aria-disabled', 'true');
+ walkButton.tabIndex = -1;
  }
- 
- function fadeOutUI() {
- const elements = [heroTitle, heroTagline, heroDescription, walkButton];
- elements.forEach(el => {
- if (!el) return;
- el.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
- el.style.opacity = '0';
- el.style.transform = 'translateY(-20px)';
- });
- 
- // Fade out menu button
- const menuBtn = document.getElementById('menuBtn');
- if (menuBtn) {
- menuBtn.style.transition = 'opacity 0.5s ease-out';
- menuBtn.style.opacity = '0';
- }
- 
- // Remove vignettes for full immersion
- if (vignetteBottom) {
- vignetteBottom.style.transition = 'opacity 0.8s ease-out';
- vignetteBottom.style.opacity = '0';
- }
- if (vignetteTop) {
- vignetteTop.style.transition = 'opacity 0.8s ease-out';
- vignetteTop.style.opacity = '0';
- }
- }
- 
- function cinematicZoomToGameplay() {
- if (!heroCanvas || !gameCanvas) {
- fallbackToGameplay();
- return;
- }
- 
- // Get game canvas position for seamless handoff
- const gameRect = gameCanvas.getBoundingClientRect();
- const heroRect = heroCanvas.getBoundingClientRect();
- 
- // Calculate center point for zoom
- const centerX = gameRect.left + gameRect.width / 2;
- const centerY = gameRect.top + gameRect.height / 2;
- const heroCenterX = heroRect.left + heroRect.width / 2;
- const heroCenterY = heroRect.top + heroRect.height / 2;
- 
- // Calculate transform needed to align hero canvas with game canvas
- const translateX = centerX - heroCenterX;
- const translateY = centerY - heroCenterY;
- const scale = Math.max(
- gameRect.width / heroRect.width,
- gameRect.height / heroRect.height
- ) * 1.5;
- 
- // Apply cinematic transform to hero canvas
- heroCanvas.style.transition = 'transform 2.5s cubic-bezier(0.45, 0, 0.55, 1), opacity 0.8s ease-out 1.5s';
- heroCanvas.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
- 
- // Disable interaction on hero
+
  if (heroFocus) {
- heroFocus.style.pointerEvents = 'none';
+ heroFocus.classList.add('is-transitioning-out');
  }
- 
- // PHASE 3: Reveal gameplay layer
- setTimeout(() => {
- revealGameplay();
- }, 2000);
- 
- // Fade out hero canvas after gameplay is ready
- setTimeout(() => {
- heroCanvas.style.opacity = '0';
- 
- // Hide hero section completely
- if (heroSection) {
- heroSection.style.position = 'absolute';
- heroSection.style.pointerEvents = 'none';
- heroSection.style.opacity = '0';
- }
- }, 2200);
- }
- 
- function revealGameplay() {
- // Game is already initialized from DOMContentLoaded
- // Just ensure it's visible and focused
- 
- // Show playable section
+
  if (playableSection) {
- playableSection.style.opacity = '1';
- playableSection.style.pointerEvents = 'all';
- playableSection.style.position = 'relative';
- playableSection.style.zIndex = '100';
- 
- // Scroll to gameplay
- playableSection.scrollIntoView({ behavior: 'smooth' });
+ playableSection.classList.add('is-transition-target');
+ setupPlayableRevealObserver();
+ setTimeout(() => {
+ playableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+ }, 120);
+ } else {
+ finishTransition();
  }
- 
- // Trigger gameplay overlay
- const gameOverlay = document.getElementById('game-overlay');
- if (gameOverlay) {
- gameOverlay.style.opacity = '1';
- gameOverlay.style.pointerEvents = 'all';
+
+ // Fallback for browsers or layouts where observer does not fire reliably
+ setTimeout(() => {
+ if (currentState === STATE.TRANSITIONING) {
+ finishTransition();
  }
- 
+ }, 2400);
+ }
+
+ function setupPlayableRevealObserver() {
+ if (!playableSection || !('IntersectionObserver' in window)) return;
+
+ if (revealObserver) {
+ revealObserver.disconnect();
+ }
+
+ revealObserver = new IntersectionObserver((entries) => {
+ const entry = entries[0];
+ if (!entry || !entry.isIntersecting) return;
+ finishTransition();
+ }, { threshold: 0.45 });
+
+ revealObserver.observe(playableSection);
+ }
+
+ function finishTransition() {
+ if (currentState !== STATE.TRANSITIONING && currentState !== STATE.GAMEPLAY) return;
+
+ if (playableSection) {
+ playableSection.classList.add('is-visible');
+ }
+
  currentState = STATE.GAMEPLAY;
  transitionInProgress = false;
- 
+
+ if (revealObserver) {
+ revealObserver.disconnect();
+ revealObserver = null;
+ }
+
  document.dispatchEvent(new CustomEvent('transition-complete', {
  detail: { state: STATE.GAMEPLAY }
  }));
- 
- console.log('Transition complete - gameplay active');
- }
- 
- function fallbackToGameplay() {
- // Direct fallback if canvas transition fails
- if (playableSection) {
- playableSection.style.opacity = '1';
- playableSection.scrollIntoView({ behavior: 'smooth' });
- }
- currentState = STATE.GAMEPLAY;
  }
  
  return {
