@@ -1146,11 +1146,18 @@ const PlayableGame = (function () {
  
  object.traverse((child) => {
  if (child.isMesh) {
- const color = getAssetColor(filename);
+ const category = getAssetCategory(filename);
+ const color = getCategoryTint(category);
+ 
+ // Preserve original material with tint overlay
+ if (child.material) {
+ child.material.color.setHex(color);
+ } else {
  child.material = new THREE.MeshLambertMaterial({ 
  color: color,
  side: THREE.DoubleSide
  });
+ }
  child.castShadow = !filename.includes('Pebble') && !filename.includes('Petal');
  child.receiveShadow = true;
  }
@@ -1259,31 +1266,130 @@ const PlayableGame = (function () {
  });
  }
 
- function getAssetScale(filename) {
- if (filename.includes('Tree')) return 0.5;
- if (filename.includes('Bush')) return 0.6;
- if (filename.includes('Rock_Medium')) return 0.4;
- if (filename.includes('RockPath')) return 0.5;
- if (filename.includes('Mushroom')) return 0.25;
- if (filename.includes('Flower') && filename.includes('Group')) return 0.3;
- if (filename.includes('Flower')) return 0.2;
- if (filename.includes('Grass') || filename.includes('Plant')) return 0.3;
- if (filename.includes('Pebble')) return 0.15;
- return 0.3;
- }
+function getAssetScale(filename) {
+  if (filename.includes('Tree')) return 0.5;
+  if (filename.includes('Bush')) return 0.6;
+  if (filename.includes('Rock_Medium')) return 0.4;
+  if (filename.includes('LargeRock')) return 0.8;
+  if (filename.includes('Small Rock')) return 0.25;
+  if (filename.includes('RockPath')) return 0.5;
+  if (filename.includes('Mushroom')) return 0.25;
+  if (filename.includes('Flower') && filename.includes('Group')) return 0.3;
+  if (filename.includes('Flower')) return 0.2;
+  if (filename.includes('Grass') || filename.includes('Plant')) return 0.3;
+  if (filename.includes('Fern')) return 0.35;
+  if (filename.includes('Log') || filename.includes('Stump')) return 0.4;
+  if (filename.includes('Barrel')) return 0.3;
+  if (filename.includes('Brick')) return 0.15;
+  if (filename.includes('Torch')) return 0.2;
+  if (filename.includes('Tent')) return 0.6;
+  if (filename.includes('Campfire')) return 0.35;
+  if (filename.includes('Well')) return 0.8;
+  if (filename.includes('Sign Post') || filename.includes('SignPost')) return 0.5;
+  if (filename.includes('Fence')) return 0.6;
+  if (filename.includes('RockWall')) return 0.7;
+  if (filename.includes('Pebble')) return 0.15;
+  return 0.3;
+}
 
- function getAssetColor(filename) {
- if (filename.includes('Tree')) {
- if (filename.includes('Dead')) return 0x8b7355;
- if (filename.includes('Pine')) return 0x1d4a17;
- return 0x2d5a27;
- }
- if (filename.includes('Flower')) return 0xff69b4;
- if (filename.includes('Mushroom')) return 0xd2691e;
- if (filename.includes('Rock')) return 0x808080;
- if (filename.includes('Bush')) return 0x3d7a37;
- return 0x4a8a47;
- }
+// Phase 2: Category-based classification
+function getAssetCategory(filename) {
+  const lower = filename.toLowerCase();
+  
+  // TREES
+  if (lower.includes('tree')) {
+    if (lower.includes('dead')) return 'DEAD';
+    return 'TREE';
+  }
+  
+  // ROCKS
+  if (lower.includes('rock')) {
+    if (lower.includes('medium')) return 'ROCK_MEDIUM';
+    if (lower.includes('large')) return 'ROCK_LARGE';
+    if (lower.includes('small')) return 'ROCK_SMALL';
+    return 'ROCK';
+  }
+  if (lower.includes('rockwall')) return 'ROCK_WALL';
+  
+  // GROUND FOLIAGE
+  if (lower.includes('fern')) return 'FERN';
+  if (lower.includes('grass')) return 'GRASS';
+  if (lower.includes('bush')) return 'BUSH';
+  
+  // FLOWERS
+  if (lower.includes('flower')) return 'FLOWER';
+  
+  // MUSHROOMS
+  if (lower.includes('mushroom')) return 'MUSHROOM';
+  
+  // STRUCTURES
+  if (lower.includes('campfire')) return 'CAMPFIRE';
+  if (lower.includes('tent')) return 'TENT';
+  if (lower.includes('well')) return 'WELL';
+  if (lower.includes('sign')) return 'SIGNPOST';
+  if (lower.includes('fence')) return 'FENCE';
+  
+  // WOOD
+  if (lower.includes('log')) return 'LOG';
+  
+  // MISC
+  if (lower.includes('barrel')) return 'BARREL';
+  if (lower.includes('brick')) return 'BRICK';
+  if (lower.includes('torch')) return 'TORCH';
+  
+  return 'MISC';
+}
+
+// Phase 2: Category-based color tints
+function getCategoryTint(category) {
+  switch(category) {
+    // TREES: slightly greener, natural variation
+    case 'TREE': return 0x3a7a33;
+    case 'DEAD': return 0x8b7355;
+    
+    // ROCKS: grey desaturated
+    case 'ROCK':
+    case 'ROCK_MEDIUM': return 0x7a7a7a;
+    case 'ROCK_LARGE': return 0x6e6e6e;
+    case 'ROCK_SMALL': return 0x858585;
+    case 'ROCK_WALL': return 0x7d7d7d;
+    
+    // GROUND FOLIAGE: natural green variation
+    case 'FERN': return 0x4a8f42;
+    case 'GRASS': return 0x5a9a3d;
+    case 'BUSH': return 0x3d7a37;
+    
+    // FLOWERS: more colorful
+    case 'FLOWER': return 0xff7eb8;
+    
+    // MUSHROOMS: slightly saturated natural
+    case 'MUSHROOM': return 0xd2691e;
+    
+    // STRUCTURES: muted natural materials
+    case 'CAMPFIRE': return 0x8b4513;
+    case 'TENT': return 0x8fbc8f;
+    case 'WELL': return 0x8b7355;
+    case 'SIGNPOST': return 0x8b4513;
+    case 'FENCE': return 0x8b7355;
+    
+    // WOOD: natural wood tones
+    case 'LOG': return 0x8b5a2b;
+    
+    // MISC: neutral
+    case 'BARREL': return 0x8b4513;
+    case 'BRICK': return 0xa0522d;
+    case 'TORCH': return 0xcd853f;
+    
+    default: return 0x808080;
+  }
+}
+
+// Legacy function kept for compatibility
+function getAssetColor(filename) {
+  const category = getAssetCategory(filename);
+  return getCategoryTint(category);
+}
+
 
  function setupEvents(container) {
  const overlay = document.getElementById('game-overlay');
