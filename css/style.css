@@ -364,6 +364,15 @@ a:focus-visible {
     background: linear-gradient(180deg, var(--dark) 0%, var(--darker) 100%);
 }
 
+.playable-section.is-transition-target {
+    opacity: 0.75;
+    transition: opacity 700ms ease;
+}
+
+.playable-section.is-transition-target.is-visible {
+    opacity: 1;
+}
+
 .playable-container {
     position: relative;
     max-width: 1000px;
@@ -1120,6 +1129,18 @@ canvas {
 
 .hero-center-focus > * {
     pointer-events: all;
+}
+
+.hero-center-focus.is-transitioning-out > * {
+    opacity: 0;
+    transform: translateY(-16px);
+    transition: opacity 500ms ease, transform 500ms ease;
+    pointer-events: none;
+}
+
+.walk-button.is-disabled {
+    pointer-events: none;
+    opacity: 0.7;
 }
 
 /* SHIMMER TITLE - The glistening effect */
