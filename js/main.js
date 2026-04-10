@@ -450,7 +450,12 @@ const FOREST_CLUSTERS = [
  Math.abs((worldZ + CHUNK_SIZE/2) - c.center.z) < c.sparseRadius + 10
  );
  
- if (!clusterDef) return;
+ if (!clusterDef) {
+ console.log(`[TreeGen] Chunk ${worldX/CHUNK_SIZE},${worldZ/CHUNK_SIZE}: No cluster found`);
+ return;
+ }
+ 
+ const chunkKey = `${worldX/CHUNK_SIZE},${worldZ/CHUNK_SIZE}`;
  
  const chunkCenterX = worldX + CHUNK_SIZE / 2;
  const chunkCenterZ = worldZ + CHUNK_SIZE / 2;
@@ -475,6 +480,14 @@ const FOREST_CLUSTERS = [
  (clusterDef.treeCount.max - clusterDef.treeCount.min)) * densityMultiplier
  );
  
+ // INSTRUMENTATION
+ let attempts = 0;
+ let rejectedBounds = 0;
+ let rejectedPath = 0;
+ let rejectedOverlap = 0;
+ let rejectedNoAsset = 0;
+ let success = 0;
+ 
  for (let t = 0; t < targetTrees; t++) {
  const angle = Math.random() * Math.PI * 2;
  const dist = Math.random() * Math.random() * (clusterDef.denseRadius * 0.8);
@@ -484,15 +497,35 @@ const FOREST_CLUSTERS = [
  const x = worldX + lx;
  const z = worldZ + lz;
  
- if (Math.abs(lx) > CHUNK_SIZE * 0.6 || Math.abs(lz) > CHUNK_SIZE * 0.6) continue;
- if (isOnPath(x, z)) continue;
- if (checkOverlap(x, z, 2)) continue;
+ if (Math.abs(lx) > CHUNK_SIZE * 0.6 || Math.abs(lz) > CHUNK_SIZE * 0.6) {
+ rejectedBounds++;
+ continue;
+ }
+ if (isOnPath(x, z)) {
+ rejectedPath++;
+ continue;
+ }
+ if (checkOverlap(x, z, 2)) {
+ rejectedOverlap++;
+ continue;
+ }
  
  const typeIndex = Math.floor(Math.random() * clusterDef.treeTypes.length);
  const typeAssets = AssetRegistry.TREES[clusterDef.treeTypes[typeIndex]];
+ 
+ // Guard against empty/missing tree types
+ if (!typeAssets || typeAssets.length === 0) {
+ console.warn(`[TreeGen] ${chunkKey}: No assets for tree type ${clusterDef.treeTypes[typeIndex]}`);
+ rejectedNoAsset++;
+ continue;
+ }
+ 
  const assetFile = typeAssets[Math.floor(Math.random() * typeAssets.length)];
  
- if (!loadedAssets[assetFile]) continue;
+ if (!loadedAssets[assetFile]) {
+ rejectedNoAsset++;
+ continue;
+ }
  
  const tree = loadedAssets[assetFile].clone();
  const distScaleFactor = 1.0 - (dist / clusterDef.denseRadius) * 0.2;
@@ -510,7 +543,11 @@ const FOREST_CLUSTERS = [
  collisionObjects.trees.push(treeData);
  
  assetUsage.set(assetFile, (assetUsage.get(assetFile) || 0) + 1);
+ success++;
  }
+ 
+ // INSTRUMENTATION REPORT
+ console.log(`[TreeGen] Chunk ${chunkKey}: target=${targetTrees}, attempts=${attempts}, success=${success}, bounds=${rejectedBounds}, path=${rejectedPath}, overlap=${rejectedOverlap}, noAsset=${rejectedNoAsset}`);
  
  if (densityMultiplier > 0.6) {
  const coverCount = Math.floor(2 * densityMultiplier);
